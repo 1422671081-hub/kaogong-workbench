@@ -234,7 +234,7 @@
         <div class="card-title">🎯 在线刷题 <span id="quizSummary" style="font-size:12px; font-weight:400; color:var(--muted)"></span></div>
         <div style="position:relative; margin-bottom:10px">
           <input type="text" id="paperSearch" autocomplete="off"
-                 placeholder="🔍 按试卷名搜索，如「2022国考副省级」"
+                 placeholder="🔍 搜索试卷名并按卷筛选，如「2022国考副省级」"
                  style="width:100%; padding:9px 12px; border:1px solid #ffe4ec; border-radius:10px; font-size:13px; outline:none; background:#fff; color:var(--text)"
                  oninput="onPaperSearch(this.value)" onfocus="onPaperSearch(this.value)">
           <div id="paperSearchBox" style="display:none; position:absolute; left:0; right:0; top:42px; z-index:30; background:#fff; border:1px solid #ffe4ec; border-radius:10px; box-shadow:var(--shadow); max-height:280px; overflow:auto"></div>
@@ -586,9 +586,16 @@ const MODS = [
 ];
 // 模块 → 该模块下全部题目
 function isInMod(q,modKey){ return q.part===modKey || q.part==="判断推理"&&q.sub===modKey || q.l2===modKey; }
-function modList(modKey){ return BANK.filter(q=>isInMod(q,modKey)); }
+
+/* ===== 试卷筛选：模块统计与取题都限定在「当前试卷」范围内 ===== */
+var quizPaper = "";
+function bankScope(){
+  if(!quizPaper) return BANK;
+  return BANK.filter(function(q){ return (q.paper||"未命名试卷")===quizPaper; });
+}
+function modList(modKey){ return bankScope().filter(q=>isInMod(q,modKey)); }
 function modCount(modKey){ return modList(modKey).length; }
-function subList(modKey,subKey){ return BANK.filter(q=>isInMod(q,modKey)&&(q.sub===subKey||q.l2===subKey)); }
+function subList(modKey,subKey){ return bankScope().filter(q=>isInMod(q,modKey)&&(q.sub===subKey||q.l2===subKey)); }
 function subCount(modKey,subKey){ return subList(modKey,subKey).length; }
 
 const M2C = {"常识判断":"常识判断","言语理解":"言语理解","数量关系":"数量关系","判断推理":"逻辑判断"}; // 模块→打卡模块
@@ -617,15 +624,23 @@ function allPapers(){
 
 function renderPaperHeader(){
   var papers=allPapers();
+  var scopeN=bankScope().length;
   var el=document.getElementById("quizSummary");
-  if(el)el.textContent="｜共 "+BANK.length+" 题"+(papers.length>1?" · "+papers.length+" 套试卷":"");
+  if(el){
+    var base=quizPaper?("｜"+quizPaper+" · "+scopeN+" 题"):("｜共 "+BANK.length+" 题");
+    if(papers.length>1)base+=" · "+papers.length+" 套试卷";
+    el.textContent=base;
+  }
   var box=document.getElementById("paperChips");
   if(!box)return;
   if(papers.length<=1){box.innerHTML="";return;}
-  box.innerHTML=papers.map(function(p){
-    return '<button class="cat-btn" style="font-size:12px" data-paper="'+p.name+'"'
-      +' onclick="startQuizByPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
-  }).join("");
+  var html='<button class="cat-btn'+(quizPaper?"":" active")+'" style="font-size:12px"'
+    +' onclick="selectPaper(\'\')">全部试卷 '+BANK.length+'</button>';
+  papers.forEach(function(p){
+    html+='<button class="cat-btn'+(quizPaper===p.name?" active":"")+'" style="font-size:12px"'
+      +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
+  });
+  box.innerHTML=html;
 }
 
 function onPaperSearch(kw){
@@ -643,26 +658,25 @@ function onPaperSearch(kw){
   }
   box.innerHTML=hits.map(function(p){
     return '<div style="padding:10px 12px;border-bottom:1px solid #fff1f5;cursor:pointer"'
-      +' data-paper="'+p.name+'" onclick="startQuizByPaper(this.dataset.paper)">'
+      +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">'
       +'<div style="font-size:13px;font-weight:600;color:var(--text)">📄 '+p.name+'</div>'
       +'<div style="font-size:11px;color:var(--muted);margin-top:3px">共 '+p.n+' 题'
-      +(p.fig?' · 图形推理 '+p.fig:'')+' · 点击开始刷</div></div>';
+      +(p.fig?' · 图形推理 '+p.fig:'')+' · 点击筛选</div></div>';
   }).join("");
   box.style.display="";
 }
 
-function startQuizByPaper(name){
+function selectPaper(name){
   if(!BANK.length){toast("题库是空的");return;}
-  var list=BANK.filter(function(q){return (q.paper||"未命名试卷")===name;})
-               .slice().sort(function(a,b){return (a.id||0)-(b.id||0);});
-  if(!list.length){toast("「"+name+"」没有题目");return;}
-  quizMode="paper";quizMod=null;quizSub="";quizList=list;quizIdx=0;
-  var sb=document.getElementById("paperSearchBox");if(sb)sb.style.display="none";
+  name=name||"";
+  // 再点同一套可取消筛选
+  quizPaper=(name && quizPaper===name)?"":name;
+  quizMod=null;quizSub="";openMod="";
   var ps=document.getElementById("paperSearch");if(ps)ps.value="";
-  document.getElementById("quizSetup").style.display="none";
-  document.getElementById("quizPlay").style.display="";
-  renderQuiz();
-  toast("开始刷「"+name+"」共 "+list.length+" 题");
+  var sb=document.getElementById("paperSearchBox");if(sb){sb.style.display="none";sb.innerHTML="";}
+  renderCats();
+  var n=bankScope().length;
+  toast(quizPaper?("已筛选「"+quizPaper+"」"+n+" 题"):("已恢复全部试卷 "+BANK.length+" 题"));
 }
 
 function renderCats(){
@@ -810,17 +824,25 @@ function closeZoom(){
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeZoom(); });
 function startQuiz(mode){
   quizMode=mode;
+  const scope=bankScope();
   if(mode==="wrong"){
-    quizList=BANK.filter(q=>DB.wrong&&DB.wrong[q.pid]);
-    if(!quizList.length){toast("错题本是空的，先做题吧");return;}
+    quizList=scope.filter(q=>DB.wrong&&DB.wrong[q.pid]);
+    if(!quizList.length){toast(quizPaper?"当前试卷没有错题":"错题本是空的，先做题吧");return;}
   }else if(mode==="review"){
     const due=dueReview();
-    quizList=BANK.filter(q=>due.includes(q.pid));
+    quizList=scope.filter(q=>due.includes(q.pid));
     if(!quizList.length){toast("今天没有待复习的题 ✓");return;}
   }else{
-    // 顺序/随机刷：按 当前模块 + 当前子类 取题
-    quizList = quizSub ? subList(quizMod, quizSub) : modList(quizMod);
-    if(!quizList.length){toast(quizSub?`「${quizSub}」暂无题目`:`「${quizMod}」暂无题目`);return;}
+    // 顺序/随机刷：选了模块就按模块/子类取，没选就取当前试卷全部
+    if(quizMod){
+      quizList = quizSub ? subList(quizMod, quizSub) : modList(quizMod);
+    }else{
+      quizList = scope.slice().sort((a,b)=>(a.id||0)-(b.id||0));
+    }
+    if(!quizList.length){
+      toast(quizMod?(quizSub?`「${quizSub}」暂无题目`:`「${quizMod}」暂无题目`):"当前范围暂无题目");
+      return;
+    }
     if(mode==="random")quizList=quizList.slice().sort(()=>Math.random()-0.5);
   }
   quizIdx=0;
