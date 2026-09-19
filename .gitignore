@@ -2,11 +2,11 @@
 config.json
 
 # 本地模式的数据目录（题库、错题、打卡、配图）
-gongkao-data/
+kaogong-data/
 localtest/
 
 # 生成的刷题页
-公考工作台.html
+考公工作台.html
 *.skill
 
 # Python

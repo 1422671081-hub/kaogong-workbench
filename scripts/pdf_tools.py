@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""公考题库 · PDF 处理工具
+"""考公题库 · PDF 处理工具
 
 三个子命令：
   text  看某一页的纯文本（先用来确认 PDF 物理页与卷面页码的偏移）
@@ -133,7 +133,7 @@ def cmd_crop(args):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="公考题库 PDF 处理工具")
+    ap = argparse.ArgumentParser(description="考公题库 PDF 处理工具")
     sub = ap.add_subparsers(dest="cmd")
 
     p1 = sub.add_parser("text", help="看某页纯文本")

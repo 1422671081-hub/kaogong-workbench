@@ -1,4 +1,4 @@
-# 公考题库助手 · gongkao-tiku
+# 考公工作台 · kaogong-workbench
 
 一个 AI Agent 技能：**把整套试卷 PDF 变成一套可刷题、可管错题、能按遗忘曲线复习的工作台。**
 
@@ -39,7 +39,7 @@
 把本目录放到客户端的 skills 目录下即可，例如：
 
 ```bash
-git clone https://github.com/1422671081-hub/gongkao-tiku.git ~/.claude/skills/gongkao-tiku
+git clone https://github.com/1422671081-hub/kaogong-workbench.git ~/.claude/skills/kaogong-workbench
 ```
 
 ---
@@ -48,26 +48,26 @@ git clone https://github.com/1422671081-hub/gongkao-tiku.git ~/.claude/skills/go
 
 ```bash
 # 1. 初始化数据目录
-python3 scripts/local_store.py init --dir ./gongkao-data
+python3 scripts/local_store.py init --dir ./kaogong-data
 
 # 2. 录入题目（new-questions.json 是一个题目数组，字段规范见 SKILL.md 第三节）
-python3 scripts/local_store.py add-q --dir ./gongkao-data --json new-questions.json
+python3 scripts/local_store.py add-q --dir ./kaogong-data --json new-questions.json
 
 # 3. 记错题
-python3 scripts/local_store.py wrong --dir ./gongkao-data --pid "2022国考副省级-76"
+python3 scripts/local_store.py wrong --dir ./kaogong-data --pid "2022国考副省级-76"
 
 # 4. 看今天该复习什么
-python3 scripts/local_store.py due --dir ./gongkao-data
+python3 scripts/local_store.py due --dir ./kaogong-data
 
 # 5. 打今天的卡
-python3 scripts/local_store.py checkin --dir ./gongkao-data \
+python3 scripts/local_store.py checkin --dir ./kaogong-data \
     --module 言语理解 --done 10 --correct 8 --minutes 15
 
 # 6. 生成单文件刷题页
-python3 scripts/local_store.py build --dir ./gongkao-data --out ./公考工作台.html
+python3 scripts/local_store.py build --dir ./kaogong-data --out ./考公工作台.html
 ```
 
-生成出来的 `公考工作台.html` **双击即用**，也可以直接发给朋友。
+生成出来的 `考公工作台.html` **双击即用**，也可以直接发给朋友。
 
 > 更省事的用法是把 PDF 直接丢给你的 AI 助手，说一句「录这套卷子」，让它读 SKILL.md 自己走流程。
 
@@ -89,7 +89,7 @@ python3 scripts/local_store.py build --dir ./gongkao-data --out ./公考工作�
 ## 目录结构
 
 ```
-gongkao-tiku/
+kaogong-workbench/
 ├── SKILL.md                 技能定义与完整工作流
 ├── scripts/
 │   ├── pdf_tools.py         PDF 提字 / 渲染 / 裁切
@@ -126,7 +126,7 @@ gongkao-tiku/
 
 `checkin.json` —— `{ "YYYY-MM-DD": { modules: { 模块名: { done, correct, minutes } }, note } }`
 
-配图放在 `gongkao-data/img/`，文件名与题目里的 `img` / `qimg` / `imgs` 字段一致。
+配图放在 `kaogong-data/img/`，文件名与题目里的 `img` / `qimg` / `imgs` 字段一致。
 
 ---
 

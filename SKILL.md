@@ -1,14 +1,14 @@
 ---
-name: gongkao-tiku
+name: kaogong-workbench
 description: |
-  公考备考工作台的题库管理助手。把整套试卷 PDF 录进题库、记录和查询错题、
+  考公工作台的题库管理助手。把整套试卷 PDF 录进题库、记录和查询错题、
   生成艾宾浩斯复习清单、汇总刷题打卡统计，并生成可离线使用的单文件刷题页。
   触发词：录题、录入试卷、把这份卷子录进去、报错题、第几题错了、今日复习、
-  错题本、刷题统计、打卡统计、公考题库、考公工作台。
+  错题本、刷题统计、打卡统计、考公题库、考公工作台。
 license: MIT
 ---
 
-# 公考题库助手
+# 考公工作台
 
 把整套试卷 PDF 变成一套可刷题、可管错题、可按遗忘曲线复习的工作台。
 
@@ -80,7 +80,7 @@ license: MIT
 ### B1. 初始化
 
 ```bash
-python3 scripts/local_store.py init --dir ./gongkao-data
+python3 scripts/local_store.py init --dir ./kaogong-data
 ```
 
 生成 `questions.json` / `wrong.json` / `checkin.json` / `img/` 四个位置。
@@ -88,38 +88,38 @@ python3 scripts/local_store.py init --dir ./gongkao-data
 ### B2. 录题
 
 ```bash
-python3 scripts/local_store.py add-q --dir ./gongkao-data --json new-questions.json
+python3 scripts/local_store.py add-q --dir ./kaogong-data --json new-questions.json
 ```
 
 `--json` 指向一个题目数组（字段规范见第三节）。已在库的 `pid` 会被覆盖，新增的追加。
-配图按文件名放进 `gongkao-data/img/`。写完后脚本会提示哪些图还没到位。
+配图按文件名放进 `kaogong-data/img/`。写完后脚本会提示哪些图还没到位。
 
 ### B3. 错题与复习
 
 ```bash
 # 记一道错题（错次 +1、复习阶段归 0、下次复习 = 明天）
-python3 scripts/local_store.py wrong --dir ./gongkao-data --pid "2022国考副省级-76"
+python3 scripts/local_store.py wrong --dir ./kaogong-data --pid "2022国考副省级-76"
 
 # 看今天该复习什么
-python3 scripts/local_store.py due --dir ./gongkao-data
+python3 scripts/local_store.py due --dir ./kaogong-data
 
 # 报告复习结果（--right 表示答对，推进一轮；不加则打回第 1 轮）
-python3 scripts/local_store.py review --dir ./gongkao-data --pid "..." --right
+python3 scripts/local_store.py review --dir ./kaogong-data --pid "..." --right
 ```
 
 ### B4. 打卡与统计
 
 ```bash
-python3 scripts/local_store.py checkin --dir ./gongkao-data --module 言语理解 \
+python3 scripts/local_store.py checkin --dir ./kaogong-data --module 言语理解 \
     --done 10 --correct 8 --minutes 15
 
-python3 scripts/local_store.py stats --dir ./gongkao-data
+python3 scripts/local_store.py stats --dir ./kaogong-data
 ```
 
 ### B5. 生成单文件刷题页（本地模式的主要用途）
 
 ```bash
-python3 scripts/local_store.py build --dir ./gongkao-data --out ./公考工作台.html
+python3 scripts/local_store.py build --dir ./kaogong-data --out ./考公工作台.html
 ```
 
 产出**一个自包含 HTML**：题库和图片（base64）全部内嵌，**双击即用，不需要服务器、
@@ -211,7 +211,7 @@ python3 scripts/pdf_tools.py crop "<原卷.pdf>" --page 31 --dpi 150 --box x0,y0
 
 **裁完必须肉眼扫一遍图片底部**，确认没有把下一题的题干带进来（这是最容易犯的错）。
 
-配图放进 `gongkao-data/img/`（本地模式），文件名与 `img` / `qimg` / `imgs` 字段一致。
+配图放进 `kaogong-data/img/`（本地模式），文件名与 `img` / `qimg` / `imgs` 字段一致。
 云端模式则先转托管直链再写图片字段（`library` 技能的 `manage/upload_image.py`），
 **不要 base64 内嵌**。
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta content="width=device-width, initial-scale=1.0" name="viewport">
 <link href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" rel="icon">
-<title>公考上岸小仓库</title>
+<title>考公工作台</title>
 <style>
   :root{
     --pink:#ff6b9d; --pink-light:#ff9ebz; --pink-bg:#fff0f4; --pink-soft:#ffe3ec;
@@ -522,7 +522,7 @@ function saveSettings(){
 }
 function exportData(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="公考小仓库备份_"+todayStr()+".json";a.click();
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="考公工作台备份_"+todayStr()+".json";a.click();
 }
 function importData(ev){
   const f=ev.target.files[0];if(!f)return;

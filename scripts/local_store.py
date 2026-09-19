@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""公考题库 · 本地模式数据管理（无 WorkBuddy 环境用）
+"""考公题库 · 本地模式数据管理（无 WorkBuddy 环境用）
 
 数据全部落在本地目录，纯标准库、零第三方依赖。
 
-    python3 local_store.py init    --dir ./gongkao-data
-    python3 local_store.py add-q   --dir ./gongkao-data --json new-questions.json
-    python3 local_store.py wrong   --dir ./gongkao-data --pid "2022国考副省级-76"
-    python3 local_store.py due     --dir ./gongkao-data
-    python3 local_store.py checkin --dir ./gongkao-data --module 言语理解 --done 10 --correct 8 --minutes 15
-    python3 local_store.py stats   --dir ./gongkao-data
-    python3 local_store.py build   --dir ./gongkao-data --out ./公考工作台.html
+    python3 local_store.py init    --dir ./kaogong-data
+    python3 local_store.py add-q   --dir ./kaogong-data --json new-questions.json
+    python3 local_store.py wrong   --dir ./kaogong-data --pid "2022国考副省级-76"
+    python3 local_store.py due     --dir ./kaogong-data
+    python3 local_store.py checkin --dir ./kaogong-data --module 言语理解 --done 10 --correct 8 --minutes 15
+    python3 local_store.py stats   --dir ./kaogong-data
+    python3 local_store.py build   --dir ./kaogong-data --out ./考公工作台.html
 
 数据文件：
     questions.json  题目数组（一题一个对象）
@@ -285,7 +285,7 @@ def cmd_build(a):
     html = html.replace("/*__IMG_DATA_JSON__*/", json.dumps(img_data, ensure_ascii=False))
     html = html.replace("/*__IMG_VER__*/", ver)
 
-    out = a.out or os.path.join(p["root"], "公考工作台.html")
+    out = a.out or os.path.join(p["root"], "考公工作台.html")
     with io.open(out, "w", encoding="utf-8", newline="") as fp:
         fp.write(html)
 
@@ -300,12 +300,12 @@ def cmd_build(a):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="公考题库 · 本地模式")
+    ap = argparse.ArgumentParser(description="考公题库 · 本地模式")
     sub = ap.add_subparsers(dest="cmd")
 
     def add(name, fn, **kw):
         s = sub.add_parser(name, **kw)
-        s.add_argument("--dir", default="./gongkao-data")
+        s.add_argument("--dir", default="./kaogong-data")
         s.set_defaults(func=fn)
         return s
 
