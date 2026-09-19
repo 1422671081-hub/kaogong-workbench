@@ -1,0 +1,11 @@
+{
+  "_说明": "把这个文件复制成 config.json 并填入你自己的 ID。仅云端模式需要；本地模式不用建这个文件。",
+  "_怎么填": "在你的 WorkBuddy 里让 AI 用 library 技能的 create_database.py 建三张表，把返回的 database_id 填到下面。字段定义见 SKILL.md 第三节。",
+  "mode": "cloud",
+  "space_id": "",
+  "database_id": {
+    "questions": "",
+    "wrong": "",
+    "checkin": ""
+  }
+}
