@@ -39,7 +39,7 @@
 把本目录放到客户端的 skills 目录下即可，例如：
 
 ```bash
-git clone https://github.com/<你的用户名>/gongkao-tiku.git ~/.claude/skills/gongkao-tiku
+git clone https://github.com/1422671081-hub/gongkao-tiku.git ~/.claude/skills/gongkao-tiku
 ```
 
 ---
