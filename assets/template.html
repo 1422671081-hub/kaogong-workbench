@@ -231,8 +231,16 @@
     <!-- 在线刷题 -->
     <div class="page" id="page-quiz">
       <div class="card" id="quizSetup">
-        <div class="card-title">🎯 在线刷题 · 2022国考副省级真题 134 题</div>
-        <p style="font-size:12px; color:var(--muted); margin-bottom:12px">做题自动计入当日打卡和错题本，不用手填。除第 4 题（原卷图暂缺）外全部收录，图形推理与资料分析均含配图（可左右滑动、点击放大）。</p>
+        <div class="card-title">🎯 在线刷题 <span id="quizSummary" style="font-size:12px; font-weight:400; color:var(--muted)"></span></div>
+        <div style="position:relative; margin-bottom:10px">
+          <input type="text" id="paperSearch" autocomplete="off"
+                 placeholder="🔍 按试卷名搜索，如「2022国考副省级」"
+                 style="width:100%; padding:9px 12px; border:1px solid #ffe4ec; border-radius:10px; font-size:13px; outline:none; background:#fff; color:var(--text)"
+                 oninput="onPaperSearch(this.value)" onfocus="onPaperSearch(this.value)">
+          <div id="paperSearchBox" style="display:none; position:absolute; left:0; right:0; top:42px; z-index:30; background:#fff; border:1px solid #ffe4ec; border-radius:10px; box-shadow:var(--shadow); max-height:280px; overflow:auto"></div>
+        </div>
+        <div id="paperChips" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px"></div>
+        <p style="font-size:12px; color:var(--muted); margin-bottom:12px">做题自动计入当日打卡和错题本，不用手填。图形推理与资料分析均含配图（可左右滑动、点击放大）。</p>
         <div id="quizCatBtns" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px"></div>
         <div style="display:flex; gap:10px; flex-wrap:wrap">
           <button class="btn btn-primary" onclick="startQuiz('order')">📖 顺序刷</button>
@@ -589,6 +597,74 @@ let quizMod="常识判断";        // 当前选中模块
 let quizSub="";               // 当前选中子类（空=全部练习）
 let openMod="";               // 展开的模块（""=全部收起）
 
+/* ===== 按试卷搜索 / 筛选 ===== */
+function allPapers(){
+  var m={};
+  BANK.forEach(function(q){
+    var p=q.paper||"未命名试卷";
+    if(!m[p])m[p]={name:p,n:0,fig:0,img:0,minId:1e9,maxId:0};
+    m[p].n++;
+    if(q.fig)m[p].fig++;
+    if(q.img||q.qimg||(q.imgs&&q.imgs.length))m[p].img++;
+    var id=q.id||0;
+    if(id<m[p].minId)m[p].minId=id;
+    if(id>m[p].maxId)m[p].maxId=id;
+  });
+  return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){
+    return a.minId-b.minId;
+  });
+}
+
+function renderPaperHeader(){
+  var papers=allPapers();
+  var el=document.getElementById("quizSummary");
+  if(el)el.textContent="｜共 "+BANK.length+" 题"+(papers.length>1?" · "+papers.length+" 套试卷":"");
+  var box=document.getElementById("paperChips");
+  if(!box)return;
+  if(papers.length<=1){box.innerHTML="";return;}
+  box.innerHTML=papers.map(function(p){
+    return '<button class="cat-btn" style="font-size:12px" data-paper="'+p.name+'"'
+      +' onclick="startQuizByPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
+  }).join("");
+}
+
+function onPaperSearch(kw){
+  var box=document.getElementById("paperSearchBox");
+  if(!box)return;
+  kw=(kw||"").trim();
+  if(!kw){box.style.display="none";box.innerHTML="";return;}
+  var low=kw.toLowerCase();
+  var hits=allPapers().filter(function(p){
+    return p.name.toLowerCase().indexOf(low)>=0;
+  });
+  if(!hits.length){
+    box.innerHTML='<div style="padding:12px;font-size:13px;color:var(--muted)">没有匹配「'+kw+'」的试卷</div>';
+    box.style.display="";return;
+  }
+  box.innerHTML=hits.map(function(p){
+    return '<div style="padding:10px 12px;border-bottom:1px solid #fff1f5;cursor:pointer"'
+      +' data-paper="'+p.name+'" onclick="startQuizByPaper(this.dataset.paper)">'
+      +'<div style="font-size:13px;font-weight:600;color:var(--text)">📄 '+p.name+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-top:3px">共 '+p.n+' 题'
+      +(p.fig?' · 图形推理 '+p.fig:'')+' · 点击开始刷</div></div>';
+  }).join("");
+  box.style.display="";
+}
+
+function startQuizByPaper(name){
+  if(!BANK.length){toast("题库是空的");return;}
+  var list=BANK.filter(function(q){return (q.paper||"未命名试卷")===name;})
+               .slice().sort(function(a,b){return (a.id||0)-(b.id||0);});
+  if(!list.length){toast("「"+name+"」没有题目");return;}
+  quizMode="paper";quizMod=null;quizSub="";quizList=list;quizIdx=0;
+  var sb=document.getElementById("paperSearchBox");if(sb)sb.style.display="none";
+  var ps=document.getElementById("paperSearch");if(ps)ps.value="";
+  document.getElementById("quizSetup").style.display="none";
+  document.getElementById("quizPlay").style.display="";
+  renderQuiz();
+  toast("开始刷「"+name+"」共 "+list.length+" 题");
+}
+
 function renderCats(){
   const box=document.getElementById("quizCatBtns");
   let html="";
@@ -615,6 +691,7 @@ function renderCats(){
   box.innerHTML=html;
   const n=dueReview().length, br=document.getElementById("btnReview");
   if(br){br.textContent=`🔁 今日复习 (${n})`;br.style.color=n?"#d64545":"";br.style.borderColor=n?"#e88a8a":"";}
+  renderPaperHeader();
 }
 // 点一级模块：有子类则展开，无子类（常识/资料）直接选中全部
 function pickMod(k){
