@@ -13,6 +13,7 @@
 """
 import argparse
 import os
+import re
 import sys
 
 try:
@@ -54,6 +55,39 @@ def parse_box(spec):
 
 def px_to_pt(px, dpi):
     return px * 72.0 / float(dpi)
+
+
+def cmd_probe(args):
+    """检测文字层是否可用（防复制字体会让 get_text 输出乱码）"""
+    doc = fitz.open(args.pdf)
+    try:
+        n = min(args.pages, doc.page_count)
+        total = cn = 0
+        sample = ""
+        for i in range(n):
+            t = doc[i].get_text()
+            total += len(t.strip())
+            cn += len(re.findall(r"[\u4e00-\u9fff]", t))
+            if not sample and len(t.strip()) > 40:
+                sample = t.strip()[:220]
+        ratio = (cn * 100.0 / total) if total else 0.0
+        print("检测范围：前 %d 页（共 %d 页）" % (n, doc.page_count))
+        print("提取字符 %d 个，其中汉字 %d 个" % (total, cn))
+        print("汉字占比：%.1f%%" % ratio)
+        print()
+        if ratio >= 30:
+            print("结论：文字层可用 ✓ 直接 get_text 提取即可")
+        else:
+            print("结论：文字层不可用 ✗（疑似自定义编码字体防复制）")
+            print("按序尝试：")
+            print("  1) 找文字层正常的来源（网上考生回忆版 PDF 等，最省事）")
+            print("  2) 渲染成图后逐页识图：pdf_tools.py dump --pages 1-40 --dpi 150")
+            print("  3) 渲染成图 + OCR（需先备好 chi_sim 语言包）")
+        print()
+        print("--- 提取样本（若可读则文字层正常）---")
+        print(sample or "(无有效文字)")
+    finally:
+        doc.close()
 
 
 def cmd_text(args):
@@ -135,6 +169,11 @@ def cmd_crop(args):
 def main():
     ap = argparse.ArgumentParser(description="考公题库 PDF 处理工具")
     sub = ap.add_subparsers(dest="cmd")
+
+    p0 = sub.add_parser("probe", help="检测文字层是否可用（录题第一步）")
+    p0.add_argument("pdf")
+    p0.add_argument("--pages", type=int, default=3, help="检测前 N 页，默认 3")
+    p0.set_defaults(func=cmd_probe)
 
     p1 = sub.add_parser("text", help="看某页纯文本")
     p1.add_argument("pdf")

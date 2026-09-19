@@ -163,6 +163,34 @@ python3 scripts/local_store.py build --dir ./kaogong-data --out ./考公工作�
 
 用户发来一份试卷 PDF（电子版，不是拍照）。
 
+### 4.0 先检测文字层能不能用（必做，否则白干）
+
+**不是所有 PDF 都能提取文字。** 不少机构（尤其考试培训类）会嵌入**自定义编码字体**做防复制，
+`pdftotext` 和 `get_text()` 只会吐出乱码。
+
+**检测方法**：提取第 1 页正文，数汉字占比。**汉字占比低于 30% 就是文字层不可用。**
+
+典型症状：输出形如 `¢£¤¥¦§v%!"#$%&'(&¨©ª'!«`。按字体拆 span 会发现正文用的是
+`FzBookMaker*`（方正书版）这类子集字体、`enc` 为空、无 ToUnicode 映射，
+而唯一正常的字体（如 `SimSun + UniGB-UTF16-H`）只用在 `www.offcn.com` 水印上。
+同类问题在 docx 里也存在（字符被编码成西文码位，靠字体字形"画"成中文，
+表现为全篇几乎没有汉字、字体清单全是 Times New Roman / Lucida Sans Unicode 之类）。
+
+**三种应对，按优先级：**
+
+1. **找文字层正常的来源**。网上常有考生回忆版（华图、粉笔、金标尺等），
+   有的站点直接提供文字层完好的 PDF，能省掉全部识图工作。
+2. **渲染成图 + 识图**：`pdf_tools.py dump` 渲染后逐页看图。最准，但慢。
+3. **渲染成图 + OCR**：`page.get_textpage_ocr(language='chi_sim', dpi=300, full=True, tessdata=...)`。
+   中文包可从 `cdn.jsdelivr.net/gh/tesseract-ocr/tessdata_fast@main/chi_sim.traineddata` 取（约 2.4 MB，jsdelivr 可直连）。
+   速度约 1 秒/页，**字符准确率约 95%，但序号 ①②③④⑤ 几乎必错、形近字频出
+   （党→觉、血→所、入→和）、选项标点也会丢（`A.`→`A2`）**。
+   → **只能当誊稿初稿省打字力气，最终必须以原图核对。**
+
+> ⚠️ **用网上回忆版的陷阱**：回忆版的**选项顺序经常与原卷不同**，答案字母会随之错位。
+> 例如原卷 `A.甲 B.乙 C.丙` 答案 C，回忆版可能排成 `A.甲 B.丙 C.乙`，答案就变成了 B。
+> 引用它的**文字内容**没问题，但**答案必须回到原卷核对，绝不能照抄回忆版的答案字母**。
+
 ### 4.1 PDF 处理环境
 
 优先用自带的 `scripts/pdf_tools.py`，依赖 **pymupdf**（`pip install pymupdf`，纯 Python 包）。
