@@ -257,25 +257,33 @@ def cmd_build(a):
     if not os.path.exists(TEMPLATE):
         raise SystemExit("找不到模板文件：%s" % TEMPLATE)
     bank = jload(p["q"], [])
+    papers_filter = getattr(a, "papers", "")
+    if papers_filter:
+        allow = set(x.strip() for x in papers_filter.split(",") if x.strip())
+        bank = [q for q in bank if q.get("paper") in allow]
+        if not bank:
+            raise SystemExit("过滤后题库为空，检查 --papers 参数")
     if not bank:
         raise SystemExit("题库是空的，先 add-q 录题")
 
-    # 图片 -> base64
+    # 图片 -> base64（--no-embed 时跳过，走 img/ 相对路径回退）
     img_data = {}
     missing = []
-    for q in bank:
-        for f in [q.get("img"), q.get("qimg")] + list(q.get("imgs") or []):
-            if not f or f in img_data:
-                continue
-            fp = os.path.join(p["img"], f)
-            if not os.path.exists(fp):
-                missing.append(f)
-                continue
-            ext = os.path.splitext(f)[1].lower().lstrip(".") or "png"
-            mime = "jpeg" if ext in ("jpg", "jpeg") else ext
-            with open(fp, "rb") as fh:
-                img_data[f] = "data:image/%s;base64,%s" % (
-                    mime, base64.b64encode(fh.read()).decode("ascii"))
+    no_embed = getattr(a, "no_embed", False)
+    if not no_embed:
+        for q in bank:
+            for f in [q.get("img"), q.get("qimg")] + list(q.get("imgs") or []):
+                if not f or f in img_data:
+                    continue
+                fp = os.path.join(p["img"], f)
+                if not os.path.exists(fp):
+                    missing.append(f)
+                    continue
+                ext = os.path.splitext(f)[1].lower().lstrip(".") or "png"
+                mime = "jpeg" if ext in ("jpg", "jpeg") else ext
+                with open(fp, "rb") as fh:
+                    img_data[f] = "data:image/%s;base64,%s" % (
+                        mime, base64.b64encode(fh.read()).decode("ascii"))
 
     tpl = io.open(TEMPLATE, encoding="utf-8").read()
     import hashlib
@@ -292,7 +300,9 @@ def cmd_build(a):
     print("已生成单文件刷题页:", os.path.abspath(out))
     print("  题目 %d 题 | 内嵌图片 %d 张 | 文件 %.1f KB" % (
         len(bank), len(img_data), os.path.getsize(out) / 1024.0))
-    print("  双击即可打开，图片已内嵌，不用带 img/ 目录")
+    print("  双击即可打开，图片已内嵌，不用带 img/ 目录"
+          if not no_embed else
+          "  图片走 img/ 相对路径（需与 img/ 文件夹一起使用）")
     if missing:
         print("  警告：%d 张配图缺失，页面里会显示占位提示：" % len(set(missing)))
         for f in sorted(set(missing)):
@@ -333,6 +343,8 @@ def main():
     add("stats", cmd_stats, help="统计概览")
     s = add("build", cmd_build, help="生成单文件刷题页")
     s.add_argument("--out", default="")
+    s.add_argument("--papers", default="")
+    s.add_argument("--no-embed", action="store_true")
 
     args = ap.parse_args()
     if not getattr(args, "func", None):
