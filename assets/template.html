@@ -242,7 +242,7 @@
                  oninput="onPaperSearch(this.value)" onfocus="onPaperSearch(this.value)">
           <div id="paperSearchBox" style="display:none; position:absolute; left:0; right:0; top:42px; z-index:30; background:#fff; border:1px solid #ffe4ec; border-radius:10px; box-shadow:var(--shadow); max-height:280px; overflow:auto"></div>
         </div>
-        <div id="paperChips" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px"></div>
+        <div id="paperChips" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; max-height:290px; overflow-y:auto; padding:2px"></div>
         <p style="font-size:12px; color:var(--muted); margin-bottom:12px">做题自动计入当日打卡和错题本，不用手填。图形推理与资料分析均含配图（可左右滑动、点击放大）。</p>
         <div id="quizCatBtns" style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px"></div>
         <div style="display:flex; gap:10px; flex-wrap:wrap">
@@ -637,54 +637,14 @@ function renderPaperHeader(){
   var box=document.getElementById("paperChips");
   if(!box)return;
   if(papers.length<=1){box.innerHTML="";return;}
-  // 国考平铺 + 省考下钻（省考卷命名需含省份名，如「2023安徽省考」）
-  var PROVS=["安徽","北京","福建","甘肃","广东","广西","贵州","海南","河北","河南","黑龙江",
-             "湖北","湖南","吉林","江苏","江西","辽宁","内蒙古","宁夏","青海","山东","山西",
-             "陕西","上海","四川","天津","西藏","新疆","云南","浙江","重庆","广州","深圳"];
-  function provOf(name){
-    if(!name || name.indexOf("国考")>=0) return "";
-    for(var i=0;i<PROVS.length;i++){ if(name.indexOf(PROVS[i])>=0) return PROVS[i]; }
-    return "其他";
-  }
-  var gk=[], provMap={};
-  papers.forEach(function(p){
-    var pv=provOf(p.name);
-    if(pv){ (provMap[pv]=provMap[pv]||[]).push(p); } else { gk.push(p); }
-  });
   var html='<button class="paper-chip'+(quizPaper?"":" active")+'"'
-    +' onclick="selectPaper(\'\')">📚 全部试卷 '+BANK.length+'</button>';
-  if(!provOpen){
-    gk.forEach(function(p){
-      html+='<button class="paper-chip'+(quizPaper===p.name?" active":"")+'"'
-        +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
-    });
-    var pn=Object.keys(provMap).length;
-    if(pn){
-      var tot=0; for(var k in provMap) provMap[k].forEach(function(p){tot+=p.n;});
-      html+='<button class="paper-chip" onclick="openProv()">🗺 省考 '+pn+'省 '+tot+'题 ▸</button>';
-    }
-  } else if(!curProv){
-    html+='<button class="paper-chip" onclick="closeProv()">‹ 返回国考卷</button>';
-    html+='<button class="paper-chip'+(quizPaper?"":" active")+'" onclick="selectPaper(\'\')">📚 全部试卷 '+BANK.length+'</button>';
-    Object.keys(provMap).sort().forEach(function(pv){
-      var tot=0; provMap[pv].forEach(function(p){tot+=p.n;});
-      html+='<button class="paper-chip" onclick="pickProv(\''+pv+'\')">📍 '+pv+' '+provMap[pv].length+'卷'+tot+'题 ▸</button>';
-    });
-  } else {
-    html+='<button class="paper-chip" onclick="backProvs()">‹ 全部省份</button>';
-    html+='<button class="paper-chip'+(quizPaper?"":" active")+'" onclick="selectPaper(\'\')">📚 全部试卷 '+BANK.length+'</button>';
-    (provMap[curProv]||[]).forEach(function(p){
-      html+='<button class="paper-chip'+(quizPaper===p.name?" active":"")+'"'
-        +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
-    });
-  }
+    +' data-paper="" onclick="selectPaper(this.dataset.paper)">📚 全部试卷 '+BANK.length+'</button>';
+  papers.forEach(function(p){
+    html+='<button class="paper-chip'+(quizPaper===p.name?" active":"")+'"'
+      +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
+  });
   box.innerHTML=html;
 }
-var provOpen=false, curProv="";
-function openProv(){ provOpen=true; curProv=""; renderPaperHeader(); }
-function closeProv(){ provOpen=false; curProv=""; renderPaperHeader(); }
-function pickProv(pv){ curProv=pv; renderPaperHeader(); }
-function backProvs(){ curProv=""; renderPaperHeader(); }
 
 function onPaperSearch(kw){
   var box=document.getElementById("paperSearchBox");
