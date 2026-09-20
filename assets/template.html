@@ -637,14 +637,51 @@ function renderPaperHeader(){
   var box=document.getElementById("paperChips");
   if(!box)return;
   if(papers.length<=1){box.innerHTML="";return;}
-  var html='<button class="paper-chip'+(quizPaper?"":" active")+'"'
-    +' data-paper="" onclick="selectPaper(this.dataset.paper)">📚 全部试卷 '+BANK.length+'</button>';
+  var PROVS=["安徽","北京","福建","甘肃","广东","广西","贵州","海南","河北","河南","黑龙江",
+             "湖北","湖南","吉林","江苏","江西","辽宁","内蒙古","宁夏","青海","山东","山西",
+             "陕西","上海","四川","天津","西藏","新疆","云南","浙江","重庆","广州","深圳"];
+  function provOf(name){
+    if(!name || name.indexOf("国考")>=0) return "";
+    for(var i=0;i<PROVS.length;i++){ if(name.indexOf(PROVS[i])>=0) return PROVS[i]; }
+    return "其他";
+  }
+  var gk=[], provMap={};
   papers.forEach(function(p){
-    html+='<button class="paper-chip'+(quizPaper===p.name?" active":"")+'"'
-      +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
+    var pv=provOf(p.name);
+    if(pv){ (provMap[pv]=provMap[pv]||[]).push(p); } else { gk.push(p); }
   });
+  var html='';
+  if(!provOpen){
+    html+='<button class="paper-chip'+(quizPaper?"":" active")+'" data-paper="" onclick="selectPaper(this.dataset.paper)">📚 全部试卷 '+BANK.length+'</button>';
+    gk.forEach(function(p){
+      html+='<button class="paper-chip'+(quizPaper===p.name?" active":"")+'"'
+        +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
+    });
+    var pn=Object.keys(provMap).length, tot=0;
+    for(var k in provMap) provMap[k].forEach(function(p){tot+=p.n;});
+    if(pn) html+='<button class="paper-chip" onclick="openProv()">🗺 省考 '+pn+'省 '+tot+'题 ▸</button>';
+  } else if(!curProv){
+    html+='<button class="paper-chip" onclick="backGK()">‹ 返回国考卷</button>';
+    html+='<button class="paper-chip'+(quizPaper?"":" active")+'" data-paper="" onclick="selectPaper(this.dataset.paper)">📚 全部试卷 '+BANK.length+'</button>';
+    Object.keys(provMap).sort().forEach(function(pv){
+      var tot=0; provMap[pv].forEach(function(p){tot+=p.n;});
+      html+='<button class="paper-chip" onclick="pickProv(\''+pv+'\')">📍 '+pv+' '+provMap[pv].length+'卷 '+tot+'题 ▸</button>';
+    });
+  } else {
+    html+='<button class="paper-chip" onclick="backProvs()">‹ 全部省份</button>';
+    html+='<button class="paper-chip'+(quizPaper?"":" active")+'" data-paper="" onclick="selectPaper(this.dataset.paper)">📚 全部试卷 '+BANK.length+'</button>';
+    (provMap[curProv]||[]).forEach(function(p){
+      html+='<button class="paper-chip'+(quizPaper===p.name?" active":"")+'"'
+        +' data-paper="'+p.name+'" onclick="selectPaper(this.dataset.paper)">📄 '+p.name+' '+p.n+'</button>';
+    });
+  }
   box.innerHTML=html;
 }
+var provOpen=false, curProv="";
+function openProv(){ provOpen=true; curProv=""; renderPaperHeader(); }
+function backGK(){ provOpen=false; curProv=""; renderPaperHeader(); }
+function pickProv(pv){ curProv=pv; renderPaperHeader(); }
+function backProvs(){ curProv=""; renderPaperHeader(); }
 
 function onPaperSearch(kw){
   var box=document.getElementById("paperSearchBox");
