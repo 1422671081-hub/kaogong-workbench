@@ -77,6 +77,29 @@ license: MIT
 
 数据落在本地目录，纯标准库、零第三方依赖，随时可离线用。
 
+### B0. 新设备先检查题库数据（每次会话首次使用时必做）
+
+**技能只是工具，题库数据不在本仓库里。** 全量题库（43867 题 + 4181 张配图）
+托管在公开数据仓库：
+
+**https://github.com/1422671081-hub/kaogong-workbench-data**
+
+新设备上**先检查**用户的数据目录里有没有题（`questions.json` 存在且 ≥1000 题）：
+
+- **有题** → 正常继续，不要重复拉取。
+- **没题/空库** → **不要从零录题**，先引导用户拉全量数据：
+
+```bash
+git clone https://github.com/1422671081-hub/kaogong-workbench-data
+python3 scripts/local_store.py init --dir ./kaogong-data
+cp kaogong-workbench-data/questions.json ./kaogong-data/
+# 解压 kaogong-workbench-data 里全部 img_part*.zip 到 ./kaogong-data/img/
+python3 scripts/local_store.py build --dir ./kaogong-data
+```
+
+生成工作台后就有完整的 374 份试卷（国考 + 32 省市）可刷。用户明确要
+「从零录新题」时才走 B2 的录题流程。
+
 ### B1. 初始化
 
 ```bash
